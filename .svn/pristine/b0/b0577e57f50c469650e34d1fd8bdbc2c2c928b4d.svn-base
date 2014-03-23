@@ -1,0 +1,97 @@
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".SettingsActivity" >
+	
+	<TableRow >
+    	<TextView 
+    	    android:id="@+id/tvAge"
+    	    android:text="Age"
+    	    android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"/>
+	    <EditText
+	        android:id="@+id/ageInput"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:inputType="number"
+	        android:hint="ex.: 25" />
+	</TableRow>
+	
+	<TableRow >
+    	<TextView 
+    	    android:id="@+id/tvGender"
+    	    android:text="*Gender"
+    	    android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"/>
+	    <Spinner
+	        android:id="@+id/genderInput"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+			 />
+	</TableRow>
+	
+	<TableRow >
+    	<TextView 
+    	    android:id="@+id/tvWeight"
+    	    android:text="*Weight (in kg)"
+    	    android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"/>
+	    <EditText
+	        android:id="@+id/weightInput"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:inputType="numberDecimal"
+	        android:hint="ex.: 75.5" />
+	</TableRow>
+	
+	<TableRow >
+    	<TextView 
+    	    android:id="@+id/tvEmergency"
+    	    android:text="Emergency Number"
+    	    android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"/>
+	    <EditText
+	        android:id="@+id/emergencyInput"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:inputType="phone"
+	        android:hint="ex.: 58 12345" />
+	</TableRow>
+	
+	<TableRow >
+    	<TextView 
+    	    android:id="@+id/tvNotes"
+    	    android:text="Fields marked with * are required"
+    	    android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"/>
+	</TableRow>
+	
+	<TableRow >
+    	<Button 
+    	    android:id="@+id/buttonCancel"
+    	    android:text="Cancel"
+    	    android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1" />
+    	<Button 
+    	    android:id="@+id/buttonSave"
+    	    android:text="Save"
+    	    android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1" />
+	</TableRow>
+	    
+
+	    
+	
+</TableLayout>

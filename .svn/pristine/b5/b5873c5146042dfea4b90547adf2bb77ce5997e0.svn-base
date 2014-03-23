@@ -1,0 +1,122 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".PlanInputActivity" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1" >
+        
+        <TextView
+            android:id="@+id/tv11"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="tv1"
+	        android:layout_weight="1"
+			android:layout_gravity="right|center_vertical" />
+        
+        <antistatic.spinnerwheel.WheelHorizontalView 
+            android:id="@+id/amount"
+            android:layout_height="wrap_content" 
+            android:layout_width="100dp"
+            android:layout_weight="1"
+            android:layout_gravity="center_vertical" />
+        
+    </LinearLayout>
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="3" >
+        
+	    <antistatic.spinnerwheel.WheelVerticalView android:id="@+id/drinkType"
+            android:layout_height="wrap_content"
+	        android:layout_width="90dp"
+            android:layout_gravity="center|center_vertical" />
+	
+	    <antistatic.spinnerwheel.WheelVerticalView android:id="@+id/drinkVolume"
+	        android:layout_height="wrap_content"
+	        android:layout_width="100dp"
+            android:layout_gravity="center_vertical" />
+	    
+	    <antistatic.spinnerwheel.WheelVerticalView android:id="@+id/alcByVolume"
+        	android:layout_height="wrap_content"
+        	android:layout_width="90dp"
+            android:layout_gravity="center_vertical" />
+        	
+    </LinearLayout>
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="3" >
+	    
+        <TextView
+            android:id="@+id/tv21"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left|center_vertical"
+            android:includeFontPadding="false"
+            android:paddingRight="10dp"
+            android:text="Duration" />
+		
+		<antistatic.spinnerwheel.WheelVerticalView
+		    android:id="@+id/hours"
+		    android:layout_width="50dp"
+		    android:layout_height="wrap_content"
+		    android:layout_gravity="left|center_vertical" >
+		</antistatic.spinnerwheel.WheelVerticalView>
+		
+        <TextView
+            android:id="@+id/tv22"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="Hours" />
+        
+		<antistatic.spinnerwheel.WheelVerticalView
+		    android:id="@+id/minutes"
+		    android:layout_width="50dp"
+		    android:layout_height="wrap_content"
+		    android:layout_gravity="center_vertical" >
+</antistatic.spinnerwheel.WheelVerticalView>
+		
+        <TextView
+            android:id="@+id/tv23"
+            android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="Minutes" />
+        
+    </LinearLayout>
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1" >
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="Back"
+	        android:layout_weight="1" />
+        <Button
+            android:id="@+id/btnCreatePlan"
+            android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="Create plan"
+	        android:layout_weight="1" />
+            
+    </LinearLayout>
+    
+
+
+</LinearLayout>

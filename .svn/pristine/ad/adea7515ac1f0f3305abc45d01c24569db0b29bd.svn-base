@@ -1,0 +1,340 @@
+package com.bjor.models;
+
+import java.util.HashSet;
+import org.achartengine.model.XYMultipleSeriesDataset;
+import org.achartengine.model.XYSeries;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+
+/**
+ * LevelPlan implements IDrinkingPlan. LevelPlan's purpose is to keep
+ * BAC within specific buzz.</br>
+ * 
+ * 	&nbsp &nbsp &nbsp	|- - - -_-_-_- - 			</br>
+ *  bac 				| &nbsp &nbsp &nbsp	 __/ 	&nbsp &nbsp	<- the buzz </br>
+ * 	&nbsp &nbsp &nbsp	|- -/- - - - - - 			</br>
+ * 	&nbsp &nbsp &nbsp	| /							</br>
+ * 	&nbsp &nbsp &nbsp	|/____________________		</br>
+ *  &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp time
+ * 
+ * @author Palli Gunnarsson
+ *
+ */
+
+public class LevelPlan implements IPlan {
+	
+	private XYSeries bacSeries, drinkSeries;
+	private XYMultipleSeriesDataset dataset;
+	private int minutesDuration;
+	private Gender gender;
+	private float weight;
+	private Level level;
+	private Drink planDrinkType;
+	private SharedPreferences sharedPref;
+	private HashSet<Integer> drinkSet;
+	
+	private int timeUnitsBetweenDrinksLower, timeUnitsBetweenDrinksUpper;
+	private double timeToUpper;
+	private double alcoholInDrink;
+	private double stdDrinkToDrinkRatio;
+	private double lastBacToLimit;
+	private double lastBacToLowerLimit, lastBacToUpperLimit;
+	private int lastTimeUnitToLimit;
+	public int timeUnitsBetweenDrinks;
+	
+	public double slopeToLimit;
+	private int timeUnitStart;
+	private int timeUnitEnd;
+	
+	private double nrOfDrinks;
+	
+	/**
+	 * Creates an instance of LevelPlan
+	 * 
+	 * @param minutesDuration int > 0
+	 * @param level string either "1", "2" or "3"
+	 * @param context Context of caller
+	 */
+	public LevelPlan (int minutesDuration, Level level, Drink planDrinkType, Context context)
+	{
+		this(minutesDuration, level, planDrinkType);
+		sharedPref = context.getSharedPreferences(Global.PREFS_NAME, 0);
+		this.gender = new Gender( sharedPref.getString("gender", "Male") );
+		this.weight = Float.parseFloat( sharedPref.getString("weight", "0") );
+		Initialize();
+	}
+
+	public LevelPlan(int minutesDuration, Gender gender, float weight, Level level) {
+		this(minutesDuration, level, new Drink("Beer", Global.ML_PER_STD_BEER, Global.STD_BEER_ALC_PERC));
+		this.gender = gender;
+		this.weight = weight;
+		Initialize();
+	}
+	
+	private LevelPlan(int minutesDuration, Level level, Drink planDrinkType) {
+		this.minutesDuration = minutesDuration;
+		this.level = level;
+		this.planDrinkType = planDrinkType;
+	}
+	
+	private void Initialize() {
+		dataset = new XYMultipleSeriesDataset();
+	    bacSeries = new XYSeries("BAC per time");
+	    drinkSeries = new XYSeries("Open drink");
+	    drinkSet = new HashSet<Integer>();
+	    
+	    drinkSeries.add(0.0, 0.0);
+	    drinkSet.add(0);
+	    
+		// [g alcohol/drink]
+		alcoholInDrink = Global.ML_PER_STD_BEER * Global.STD_BEER_ALC_PERC * Global.ALC_DENSITY;
+		// [g alcohl/drink / g alcohol/stdDrink] = [stdDrink/drink]
+		stdDrinkToDrinkRatio = planDrinkType.SD();
+	}
+
+	/* (non-Javadoc)
+	 * @see com.bjor.models.IDrinkingPlan#getDataSet()
+	 */
+	@Override
+	
+	public XYMultipleSeriesDataset getDataSet()
+	{
+		
+
+		
+		double timeToLower = minutesDuration * level.ratioToLower;	//minutes for ascend to lower limit of BAC
+	
+		setUnits(0.0, timeToLower, 0.0, level.lowerBAC);
+		createSeries(0.0, level.lowerBAC);
+		updateLowerVariables();
+		
+		setUnits(lastTimeUnitToLimit*Global.GRAPH_RES, minutesDuration, lastBacToLowerLimit, level.upperBAC );
+		createSeries(lastBacToLowerLimit, level.upperBAC);
+	    
+		updateUpperVariables();
+		dataset.addSeries(bacSeries);
+	    dataset.addSeries(drinkSeries);
+	    
+	    return dataset;		
+	}
+	
+
+	
+	private void setUnits(double timeStart, double timeEnd, double bacStart, double bacEnd)
+	{
+		double timeLimit = timeEnd - timeStart;
+		double bacLimit = bacEnd - bacStart;
+		
+		slopeToLimit = bacLimit / (timeLimit/Global.MIN_PER_HOUR);
+		
+		timeUnitStart = (int)(timeStart/Global.GRAPH_RES);
+		timeUnitEnd = (int)(timeEnd/Global.GRAPH_RES);
+		int timeUnitLimit = timeUnitEnd - timeUnitStart;
+		// [min / (num*drinks*0.5)] = [2*min/(num*drinks)]
+		
+		setDrinks(timeLimit, bacLimit);
+	
+		timeUnitsBetweenDrinks = (int)(timeUnitLimit / nrOfDrinks);
+		//[min*2]
+		double timeUnitFromLastDrink = timeUnitLimit % timeUnitsBetweenDrinks;
+		//[min*2]
+		lastTimeUnitToLimit = (int)(timeUnitEnd - timeUnitFromLastDrink);
+	}
+	
+	private void setDrinks(double timeLimit, double bacLimit)
+	{
+		// [num * stdDrinks]
+		double nrOfStdDrinks = Widmark.SD(gender, bacLimit, weight, timeLimit);
+		//[num * stdDrinks/ (stdDrinks/drinks)] = [num * drinks]
+		nrOfDrinks = nrOfStdDrinks / stdDrinkToDrinkRatio;		
+	}
+	
+	private void createSeries(double bacStart, double bacEnd)
+	{
+
+	    // breytti úr timeLimit - (int)timeUnitFromLastDrink, breytti úr < í <=
+	    for(int i = timeUnitStart ; i <= lastTimeUnitToLimit; i++)
+	    {
+	    	double x = i * Global.GRAPH_RES / Global.MIN_PER_HOUR;
+	    	double y = bacStart + (x - timeUnitStart*Global.GRAPH_RES/Global.MIN_PER_HOUR) * slopeToLimit;
+	    	
+	    	bacSeries.add( x, y );
+	    	
+	    	if ( (i - timeUnitStart) % timeUnitsBetweenDrinks == 0 && (i != timeUnitStart))
+	    	{
+	    		drinkSeries.add(x, y);
+	    		drinkSet.add(i);
+	    	}
+	    }
+	    
+	    //bætti þessu við [min*2 *0.5 */ min/klst  * BAC/klst] = [BAC]
+	    lastBacToLimit = bacSeries.getY(bacSeries.getItemCount() - 1);
+	    
+	}
+	// timeStart, timeEnd is in minutes, bacStart, bacEnd is in bac. 0 <= ratioOfDrinkAfterAdd <= 1.0, double.
+	private void updateSeries(double bacStart, double bacEnd, double ratioOfDrinkAfterAdd)
+	{	
+ 	
+	    // breytti úr timeLimit - (int)timeUnitFromLastDrink, breytti úr < í <=
+	    for(int i = timeUnitStart ; i <= lastTimeUnitToLimit; i++)
+	    {
+	    	double x = i * Global.GRAPH_RES / Global.MIN_PER_HOUR;
+	    	double y = bacStart + (x - timeUnitStart*Global.GRAPH_RES/Global.MIN_PER_HOUR) * slopeToLimit;
+	    	
+	    	bacSeries.add( x, y );
+	    	if (timeUnitStart != i)
+		    {
+		    	if ( ratioOfDrinkAfterAdd != 0.0 &&
+		    			(i - timeUnitStart) % (int)(timeUnitsBetweenDrinks*ratioOfDrinkAfterAdd) == 0)
+		    	{
+		    		drinkSeries.add(x,y);
+		    		drinkSet.add(i);
+		    		ratioOfDrinkAfterAdd = 0.0;
+		    	}
+		    	else if ( (i - timeUnitStart) % timeUnitsBetweenDrinks == 0)
+		    	{
+		    		drinkSeries.add(x, y);
+		    		drinkSet.add(i);
+		    	}
+		    }
+	    }
+	    
+	    //bætti þessu við [min*2 *0.5 */ min/klst  * BAC/klst] = [BAC]
+	    lastBacToLimit = bacSeries.getY(bacSeries.getItemCount() - 1);
+		
+	}
+	
+	private void updateUpperVariables()
+	{
+		this.lastBacToUpperLimit = lastBacToLimit;
+		this.timeUnitsBetweenDrinksUpper = timeUnitsBetweenDrinks;
+	}
+	
+	private void updateLowerVariables()
+	{
+		this.lastBacToLowerLimit = lastBacToLimit;
+		this.timeUnitsBetweenDrinksLower = timeUnitsBetweenDrinks;
+	}
+	    
+	    	
+	
+	@Override
+	public XYMultipleSeriesDataset addDrink(int timeStepsSinceInit, Drink addedDrink)
+	{
+		
+		//vantar að láta ratio föllin bara taka drykki úr venjulega planinu. Dno how.
+		
+		
+		double standardDrinksAdded = addedDrink.SD();
+		double bacIncr = Widmark.BAC(gender, standardDrinksAdded, weight);
+		//double bacIncr = 0.806*1.2/(gender.BW*weight)*alcoholInDrink/Global.G_ALC_PER_STD_DRINK;
+		double bacPostAdd = bacSeries.getY(timeStepsSinceInit) + bacIncr;
+		
+		if (level.upperBAC <= bacPostAdd) return dataset;
+		
+		int index = removeOld(timeStepsSinceInit);
+		
+		double hourAdd = timeStepsSinceInit*Global.GRAPH_RES/Global.MIN_PER_HOUR;
+		double hourAfterAdd = (timeStepsSinceInit + 1)*Global.GRAPH_RES/Global.MIN_PER_HOUR;
+		
+		bacSeries.add(hourAfterAdd, bacPostAdd);
+		drinkSeries.add(hourAdd, bacSeries.getY(timeStepsSinceInit));
+		drinkSet.add(timeStepsSinceInit);
+		
+		bacSeries.getY(timeStepsSinceInit);
+		bacSeries.getY(timeStepsSinceInit+1);
+		
+		if (lastBacToLowerLimit <= bacPostAdd) addDrinkUpper(timeStepsSinceInit, bacPostAdd, index);
+		else if (bacPostAdd <= level.upperBAC) addDrinkLower(timeStepsSinceInit, bacPostAdd, index);
+		return dataset;
+	}
+	
+	//Virkar ekki því hann tekur lastLimitToLevel úr efra þótt svo við viljum nota neðra.
+	private void addDrinkUpper(int timeStepsSinceInit, double bacPostAdd, int index)
+	{
+
+		
+		double ratioOfDrinkAfterAdd = ratioOfDrinkUpper(timeStepsSinceInit, index);
+		//Byrja að bæta við gögnum.
+		
+		setUnits(timeStepsSinceInit*Global.GRAPH_RES, minutesDuration,bacPostAdd,level.upperBAC);
+		
+		updateSeries(bacPostAdd, level.upperBAC, ratioOfDrinkAfterAdd);
+		
+		updateUpperVariables();
+	}	
+	
+	private double ratioOfDrinkUpper(int timeStepsSinceInit, int index)
+	{
+		double timeUnitLastDrink = drinkSeries.getX(index)*Global.MIN_PER_HOUR/Global.GRAPH_RES;
+		double ratioOfDrinkBeforeAdd = (timeStepsSinceInit - timeUnitLastDrink)/timeUnitsBetweenDrinksUpper;
+		return (1 - ratioOfDrinkBeforeAdd);
+		
+	}
+			
+	private void addDrinkLower(int timeStepsSinceInit, double bacPostAdd, int index)
+	{
+
+		
+		double ratioOfDrinkAfterAdd = ratioOfDrinkLower(timeStepsSinceInit, index);
+		
+		setUnits(timeStepsSinceInit*Global.GRAPH_RES, minutesDuration*level.ratioToLower,
+				bacPostAdd, level.lowerBAC);
+		updateSeries(bacPostAdd, level.lowerBAC, ratioOfDrinkAfterAdd);
+		
+		updateLowerVariables();
+		
+	
+		setUnits(lastTimeUnitToLimit*Global.GRAPH_RES, minutesDuration, lastBacToLowerLimit,
+				level.upperBAC );
+		updateSeries(lastBacToLimit, level.upperBAC, 0.0);
+		
+		updateUpperVariables();
+	
+	}
+		
+	public double ratioOfDrinkLower(int timeStepsSinceInit, int index)
+	{
+		double timeUnitLastDrink = drinkSeries.getX(index)*Global.MIN_PER_HOUR/Global.GRAPH_RES;
+		double ratioOfDrinkBeforeAdd = (timeStepsSinceInit - timeUnitLastDrink)/timeUnitsBetweenDrinksLower;
+		return (1 - ratioOfDrinkBeforeAdd);		
+	}
+	
+	
+	
+	
+	private int removeOld(int timeStepsSinceInit)
+	{
+		// Removea gögn úr báðum XYSeries og datasettinu.
+		int i = timeStepsSinceInit;
+		int itemCount = bacSeries.getItemCount();
+		for (int k = i + 1; k < itemCount; k++) 
+		{
+			bacSeries.remove(i+1);
+		}
+		
+		
+		//Finn lægsta gildi í datasettinu á bilinu timeStepsSinceInit og minutesDuration/GRAP_RES,
+		//deleta svo gildum frá því úr drinkSeries
+		
+		// Error if drink is added on timeUnit 0.
+		// If we opened a drink at the same time we added another we want to make sure we dont delete that drink.
+		// But we have to adjust to the fact that use (i + 1) inside the while loop
+		while (!drinkSet.contains(i)) i--;
+		
+		
+		double key = i*Global.GRAPH_RES/Global.MIN_PER_HOUR;
+		int index = drinkSeries.getIndexForKey(key);
+		
+		
+		for (int k = drinkSeries.getItemCount() - 1; index < k; k--) drinkSeries.remove(k);
+		
+		drinkSet.clear();
+		for (int j = 0; j < drinkSeries.getItemCount(); j++)
+		{
+			drinkSet.add((int)(drinkSeries.getX(j)*Global.MIN_PER_HOUR/Global.GRAPH_RES));
+		}
+		return index;
+	}
+}

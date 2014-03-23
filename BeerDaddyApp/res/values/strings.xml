@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Beerdaddy</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <string-array name="gender_array">
+        <item>Male</item>
+        <item>Female</item>
+    </string-array>
+    
+    <string-array name="drawer_array">
+        <item>Current plan</item>
+        <item>Create plan</item>
+        <item>My history</item>
+        <item>Settings</item>
+        <item>Drinking game</item>
+    </string-array>
+    
+    <string name="drawer_open">Open navigation drawer</string>
+    <string name="drawer_close">Close navigation drawer</string>
+
+    <string name="title_activity_pick_plan">PickPlanActivity</string>
+    <string name="title_activity_plan">PlanActivity</string>
+    <string name="addDrink">Add Drink</string>
+    <string name="savePlan">Save Plan</string>
+    <string name="emergency">Send Emergency Pickup Message!</string>
+    <string name="title_activity_plan_input">PlanInputActivity</string>
+    <string name="title_activity_drink_game">DrinkGameActivity</string>
+    <string name="title_activity_history">HistoryActivity</string>
+
+    <!-- Resources for DrinkGameActivity -->
+    <string name="alcTol">Your alcohol tolerance is %1$d%% compared to an average person*.</string>
+    <string name="avgManMsg">*Averge alcohol tolerance compared to 80kg man.</string>
+
+    <plurals name="addDrinks">
+        <item quantity="one">That means you have to add %1d drink, for every 5 drinks in a drinking game.</item>
+        <item quantity="other">That means you have to add %1d drinks, for every 5 drinks in a drinking game.</item>
+    </plurals>
+    <plurals name="skipDrinks">
+        <item quantity="one">That means you can skip %1d drink, for every 5 drinks in a drinking game.</item>
+        <item quantity="other">That means you can skip %1d drinks, for every 5 drinks in a drinking game.</item>
+    </plurals>
+
+    <string name="halfDrinks">That means you can skip every other drink in a drinking game.</string>
+    <string name="doubleDrinks">That means you have to drink double in a drinking game.</string>
+    <string name="trebleDrinks">That means you have to drink triple in a drinking game.</string>
+    <string name="normalDrinks">That means you drink 1 drink for each drink, simple!</string>
+    <string name="title_activity_main">MainActivity</string>
+
+</resources>

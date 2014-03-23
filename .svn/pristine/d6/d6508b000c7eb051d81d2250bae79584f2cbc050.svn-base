@@ -1,0 +1,157 @@
+package com.bjor.fragments;
+
+import java.util.List;
+
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.ListFragment;
+import android.os.Bundle;
+import android.view.ContextMenu;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+
+
+import com.bjor.beerdaddy.R;
+import com.bjor.db.Session;
+import com.bjor.db.SessionsDataSource;
+import com.bjor.models.Global;
+
+/**
+ * This class lists the sessions the user has saved.
+ * The sessions are stored in a database.
+ * 
+ * @author Arnar Orri Eyj&#243lfsson
+ */
+public class HistoryFragment extends ListFragment {
+
+	/** An instance of SessionsDataSource */
+	private SessionsDataSource datasource;
+	/** ArrayAdapter; read the sessions from the database and configures them into a ListView */
+	private ArrayAdapter<Session> adapter;
+	
+	/** Constants */
+	private final int CONTEXT_MENU_VIEW = 1;
+	private final int CONTEXT_MENU_DELETE = 2;
+
+	
+	public HistoryFragment() {
+		//Empty constructor
+    }
+
+	@Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_history, container, false);
+        
+        datasource = new SessionsDataSource(this.getActivity());
+		datasource.open();
+
+		List<Session> values = datasource.getAllSessions();
+
+		adapter = new ArrayAdapter<Session>(this.getActivity(),
+				android.R.layout.simple_list_item_1, values);
+		setListAdapter(adapter);
+
+        return rootView;
+    }
+	
+		
+	/* (non-Javadoc)
+	 * @see android.app.ListActivity#onListItemClick(android.widget.ListView, android.view.View, int, long)
+	 */
+	@Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		registerForContextMenu(l);
+        getActivity().openContextMenu(v);
+	}
+	
+	 
+	 /* (non-Javadoc)
+	 * @see android.app.Activity#onCreateContextMenu(android.view.ContextMenu, android.view.View, android.view.ContextMenu.ContextMenuInfo)
+	 */
+	@Override
+	 public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+	  //Context menu        
+	  menu.add(Menu.NONE, CONTEXT_MENU_VIEW, Menu.NONE, "View");
+	  menu.add(Menu.NONE, CONTEXT_MENU_DELETE, Menu.NONE, "Delete");
+	 }
+
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onContextItemSelected(android.view.MenuItem)
+	 */
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo(); 
+		Session session = (Session) getListAdapter().getItem(menuInfo.position);
+	    switch(item.getItemId())
+	    {
+	    case CONTEXT_MENU_VIEW:
+	    {
+	    	//Þessi kóði verður notaður í nýtt ViewActivity - sprettur #3?
+	    	/*IPlan drinkingPlan;
+	    	switch(session.getType())
+	    	{
+		    case 2: // Buzz
+				drinkingPlan = new LevelPlan(session.getDuration(), new Level(session.getBuzz()), getApplicationContext());
+				break;
+			default:
+				drinkingPlan = new LinearPlan(session.getDuration(), session.getNod(), Global.STD_BEER_ALC_PERC, getApplicationContext());	
+	    	}*/
+	    	
+	    	Global.setBuzz(session.getBuzz());
+	    	Global.setDuration(session.getDuration());
+	    	Global.setNod(session.getNod());
+	    	Global.setType(session.getType());
+	    	Global.newPlan();
+	    	//MainController.startExternalIntent(PlanActivity.class.toString());
+	    	navigateFragments(new PlanFragment());
+	    }
+	    break;
+	    case CONTEXT_MENU_DELETE:
+	    {
+		    datasource.deleteSession(session);
+		    adapter.remove(session);
+	    }
+	    break;
+	    }
+
+	    return super.onContextItemSelected(item);
+	}
+	
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onResume()
+	 */
+	@Override
+	public void onResume() {
+		super.onResume();
+		datasource.open();
+		List<Session> values = datasource.getAllSessions();
+		adapter.clear();
+		adapter.addAll(values);
+		setListAdapter(adapter);
+	}
+
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onPause()
+	 */
+	@Override
+	public void onPause() {
+		super.onPause();
+		datasource.close();
+		
+	}
+
+	private void navigateFragments(Fragment fragment) {
+        FragmentManager fragmentManager = getFragmentManager();
+        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+    	
+    }
+	
+}

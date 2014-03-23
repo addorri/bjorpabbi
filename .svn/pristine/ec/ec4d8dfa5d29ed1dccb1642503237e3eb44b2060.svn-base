@@ -1,0 +1,40 @@
+package com.bjor.models;
+
+import android.util.Log;
+
+/**
+ * Simple class that abstracts gender specific constants.
+ * 
+ * @author Arnar P&#225ll Birgisson
+ * @since 10/10/2013
+ */
+public class Gender {
+	/** Body Water constatnt */
+	public double BW;
+	/** Metabolic rate */
+	public double MR;
+	
+	/**
+	 * Creates an instance of the Gender class
+	 * 
+	 * @param gender is either strings "Male" or "Female"
+	 * @throws IllegalArgumentException
+	 */
+	public Gender(String gender) {
+		if (gender.equalsIgnoreCase("Male"))
+		{
+			BW = 0.58;
+			MR = 0.015;
+		}
+		else if (gender.equalsIgnoreCase("Female"))
+		{
+			BW = 0.49;
+			MR = 0.017;
+		}
+		else
+		{
+			Log.e("R",gender);
+			throw new IllegalArgumentException();
+		}
+	}
+}

@@ -1,0 +1,52 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".SettingsActivity" >
+
+    <LinearLayout android:id="@+id/chart" 
+        android:orientation="horizontal"
+        android:layout_width="fill_parent" 
+        android:layout_height="0dip" 
+        android:layout_weight="1"/>
+    
+    <LinearLayout
+        android:id="@+id/belowChart"
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
+        android:layout_weight="0.68"
+        android:orientation="horizontal" >
+        
+        <Button android:id="@+id/addDrink" 
+            android:text="@string/addDrink"
+        	android:layout_width="wrap_content" 
+        	android:layout_height="wrap_content"/>
+        
+        
+        <Button android:id="@+id/savePlan" 
+            android:text="@string/savePlan"
+        	android:layout_width="wrap_content" 
+        	android:layout_height="wrap_content"/>
+        
+     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="right"
+        android:orientation="vertical" >
+
+        <Button
+            android:id="@+id/emergency"
+            android:layout_width="186dp"
+            android:layout_height="wrap_content"
+            android:text="@string/emergency" />
+
+    </LinearLayout>
+        
+</LinearLayout>

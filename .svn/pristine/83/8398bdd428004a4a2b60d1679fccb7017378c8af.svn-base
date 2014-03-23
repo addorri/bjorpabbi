@@ -1,0 +1,177 @@
+package com.bjor.beerdaddy;
+
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.concurrent.ExecutionException;
+
+import com.bjor.models.Global;
+import com.bjor.models.GpsLocationTracker;
+
+import android.app.Activity;
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.telephony.SmsManager;
+import android.util.Log;
+import android.view.Menu;
+
+
+/**
+ * This activity has logic for sending emergency button
+ * games
+ * 
+ * @author Gísli Laxdal Sturlaugsson
+ *
+ */
+public class EmergencyButtonActivity extends Activity {
+
+	/** User specific variables are stored in shared preferences */
+	private SharedPreferences sharedpref;
+
+	/** emergency number of the user */
+	private String emergency;
+
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onCreate(android.os.Bundle)
+	 */
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.fragment_drink_game);
+		sharedpref = getSharedPreferences(Global.PREFS_NAME, 0);
+	}
+	
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onResume()
+	 */
+	@Override
+	protected void onResume() {	
+		super.onResume();
+		
+		SmsManager smsManager = SmsManager.getDefault();
+		
+		PendingIntent sentPI;
+		String SENT = "SMS_SENT";
+		
+		/** retrives emergency number from sharedpref */
+		emergency = sharedpref.getString("emergency", "0000000");
+		// sleppa sentPI og nota null?
+		sentPI =  PendingIntent.getBroadcast(this, 0,new Intent(SENT), 0);
+	    StringBuffer smsBody = new StringBuffer();
+	    
+	    /** location data */  
+	    double latitude = 0, longitude = 0; 
+	    /** retrives location data */  
+	    GpsLocationTracker mGpsLocationTracker = new GpsLocationTracker(EmergencyButtonActivity.this);
+
+	    	/**
+	         * Set GPS Location fetched address
+	         */
+	        if (mGpsLocationTracker.canGetLocation()) 
+	        {
+	            latitude = mGpsLocationTracker.getLatitude();
+	            longitude = mGpsLocationTracker.getLongitude();
+	            String.format("latitude: %s", latitude);
+	            String.format("longitude: %s", longitude);
+	        } 
+	        else 
+	        {
+	            mGpsLocationTracker.showSettingsAlert();
+	        }
+	       
+	        
+	     /** assemble long Url for urlshortner */	
+	    final String longUrl = "http://maps.google.com?q="+latitude+","+longitude;
+	    String TinyUrl = null;
+	    
+		/** asynk task that shortens longurl and assigns to tinyurl */	
+	    class TinyUrlTask extends AsyncTask<String, Void, String>
+	    {
+	
+	    	@Override
+			protected String doInBackground(String... params) {
+
+	    		final String T_URL   = "http://is.gd/create.php?format=simple&url=";
+	    		final String LOG_TAG = "TinyUrl";
+
+	    		/** encodes url to be readble by website*/
+	    		String longUrlenc = null;
+	    		try {
+				longUrlenc = URLEncoder.encode(longUrl,"UTF-8");
+	    		} catch (UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+	    		}
+	    		
+	    		
+	    		String TinyUrl = "";
+	    		String urlString = T_URL + longUrlenc;  
+		        
+	    		try
+	    		{
+	    		URL url = new URL(urlString);
+
+	    		BufferedReader in = new BufferedReader( new InputStreamReader( url.openStream() ) );
+            	String str;
+
+	            while( (str = in.readLine()) != null )
+	            {
+	                TinyUrl += str;
+	            }
+	            in.close();
+	    	}
+	        
+       
+	        catch( Exception e )
+	        {
+	            Log.e( LOG_TAG, "Can not create an tinyurl link", e );
+	        }
+	        /**  output is tinyURl shortened google map link*/
+	        return TinyUrl;		
+			}
+	    	
+	    	@Override
+			protected void onPostExecute(String TinyUrl) {
+	    		super.onPostExecute(TinyUrl);
+	    	}	    	
+	    }
+	    
+	    /** execute url short asynctask longUrl input, TinyUrl output */	
+	    try {
+			TinyUrl = new TinyUrlTask()
+				        .execute(longUrl)
+				        .get();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	    /** the sms text body */	
+	    smsBody.append("I'm drunk come pick me up here: "); 
+	    smsBody.append(TinyUrl); 
+	   
+	    /** sends sms message to number using intent */	
+	    smsManager.sendTextMessage(emergency, null, smsBody.toString(), sentPI, null);		
+        finish();
+        return;
+	}
+
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onCreateOptionsMenu(android.view.Menu)
+	 */
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.drink_game, menu);
+		return true;
+	}	
+}

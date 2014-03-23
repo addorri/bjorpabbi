@@ -1,0 +1,27 @@
+package com.bjor.fragments;
+
+import com.bjor.beerdaddy.R;
+
+import android.app.Fragment;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+//PLACEHOLDER FRAGMENT
+public class CurrentFragment extends Fragment {
+	
+	public CurrentFragment() {
+        // Empty constructor required for fragment subclasses
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_current, container, false);
+        
+        return rootView;
+    }
+
+}

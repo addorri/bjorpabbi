@@ -1,0 +1,127 @@
+package com.bjor.models;
+
+import java.util.Date;
+
+/**
+ * Class for storing application wide constants and data.
+ * 
+ * @author Arnar P&#225ll Birgisson
+ * @author Arnar Orri Eyj&#243lfsson
+ * @since 16/10/2013
+ * 
+ */
+
+public class Global {
+	
+	public static final String PREFS_NAME = "hbvBDPrefsFile";
+	public static final double GRAPH_RES = 0.5; // In minutes
+	public static final int	MIN_PER_HOUR = 60;
+	public static final double ALC_DENSITY = 0.9; // 0.9 : g/ml etyl alcohol
+	public static final int ML_PER_STD_BEER = 500; // 500 ml per beer
+	public static final double G_ALC_PER_STD_DRINK = 10;  // g / Drink
+	public static final double STD_BEER_ALC_PERC = 0.05;
+	
+	// Drink input variables
+	public static int activeDrinkType;
+	public static int activeVolumes[] = new int[] { 7, 0, 1, 0 };
+	public static int activeAlcByVol[] = new int[] { 6, 20, 47, 29 };
+	public static final String[] drinkTypes = new String[] {"Beer", "Wine", "Liqueur", "Cocktail"};
+	public static final String volumes[][] = new String[][] {
+        new String[] {"20cl", "Half pint", "30cl", "33cl", "34cl", "35cl", "37cl", "50cl", "Pint", "65cl", "75cl", "100cl", "Forty", "Growler"},
+        new String[] {"Glass 12cl", "Bottle 75cl"},
+        new String[] {"Small 25ml", "Single 50ml", "Double 100ml" },
+        new String[] {"Cocktail 13cl", "Highball 30cl", "L Cocktail 35cl", "Collins 40cl"} };
+	public static final int[][] volumeMl = new int[][] {
+		new int[] { 200, 284, 300, 330, 341, 350, 370, 500, 568, 650, 750, 1000, 1283, 1893 },
+		new int[] { 120, 750 },
+		new int[] { 25, 50, 100 },
+		new int[] { 130, 300, 350, 400 } };
+	public static final String alcByVol[] = new String[] { "2.0%", "2.5%", "3.0%", "3.5%", "4.0%", "4.5%", "5.0%", "5.5%", "6.0%", "6.5%", 
+		"7.0%", "7.5%", "8.0%", "8.5%", "9.0%", "9.5%", "10.0%", "10.5%", "11.0%", "11.5%", "12.0%", "12.5%", "13%", "14%",
+		"15%", "16%", "17%", "18%", "19%", "20%", "21%", "22%", "23%", "24%", "25%", "26%", "27%", "28%", "29%", "30%",
+		"31%", "32%", "33%", "34%", "35%", "36%", "37%", "38%", "39%", "40%", "41%", "42%", "43%", "44%", "45%", "46%", 
+		"47%", "48%", "49%", "50%", "51%", "52%", "53%", "54%", "55%", "56%", "57%", "58%", "59%", "60%", "65%", "70%",
+		"75%", "80%", "85%", "Really?" };
+	public static final double[] alcByVolVal = new double[] { 0.02, 0.025, 0.03, 0.035, 0.040, 0.045, 0.050, 0.055, 0.060, 0.065, 0.070,
+		0.075, 0.080, 0.085, 0.090, 0.095, 0.1, 0.105, 0.11, 0.115, 0.120, 0.125, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19,
+		0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.3, 0.31, 0.32, 0.33, 0.34, 0.35, 0.36, 0.37, 0.38,
+		0.39, 0.40, 0.41, 0.42, 0.43, 0.44, 0.45, 0.46, 0.47, 0.48, 0.49, 0.50, 0.51, 0.52, 0.53, 0.54, 0.55, 0.56, 0.57,
+		0.58, 0.59, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90 };
+	
+	public static Drink getSelectedDrink() {
+		return new Drink(drinkTypes[activeDrinkType], volumeMl[activeDrinkType][activeVolumes[activeDrinkType]],
+						alcByVolVal[activeAlcByVol[activeDrinkType]] );
+	}
+	
+	private static int buzz;
+	private static int nod;
+	/** Duration of plan to make in minutes */
+	private static int duration;
+	private static int type;
+	private static Date planInitTime;
+	private static boolean createNewPlan;
+	
+	public static void setBuzz(int value) {
+		buzz = value;
+	}
+	
+	public static int getBuzz() {
+		return buzz;
+	}
+	
+	public static void setNod(int value) {
+		nod = value;
+	}
+	
+	public static int getNod() {
+		return nod;
+	}
+	/**
+	 * Set the duration of plan to make.
+	 * @param value > 0, is in minutes
+	 */
+	public static void setDuration(int value) {
+		duration = value;
+	}
+	
+	public static int getDuration() {
+		return duration;
+	}
+	
+	public static void setType(int value) {
+		type = value;
+	}
+	
+	public static int getType() {
+		return type;
+	}
+	
+	public static boolean isTypeNOD() {
+		return type == 1;
+	}
+	
+	public static boolean isTypeBuzz() {
+		return type == 2;
+	}
+	
+	public static void setPlanInitTime() {
+		planInitTime = new Date();
+	}
+	
+	public static Date getPlanInitTime() {
+		return planInitTime;
+	}
+	
+	public static void newPlan() {
+		createNewPlan = true;
+	}
+	
+	public static void newPlanCreated() {
+		createNewPlan = false;
+		setPlanInitTime();
+	}
+	
+	public static boolean createNewPlan() {
+		return createNewPlan;
+	}
+}

@@ -1,0 +1,290 @@
+package com.bjor.fragments;
+
+import com.bjor.beerdaddy.R;
+import com.bjor.models.Global;
+
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
+import antistatic.spinnerwheel.AbstractWheel;
+import antistatic.spinnerwheel.OnWheelChangedListener;
+import antistatic.spinnerwheel.OnWheelScrollListener;
+import antistatic.spinnerwheel.adapters.ArrayWheelAdapter;
+import antistatic.spinnerwheel.adapters.NumericWheelAdapter;
+
+/**
+ * This class takes the inputs needed to generate a drinking plan for the user
+ * 
+ * @author Arnar Orri Eyj&#243lfsson
+ * @author Arnar Pll Birgisson
+ *
+ */
+public class PlanInputFragment extends Fragment {
+
+	/** TextViews - these fields display the purpose of the input fields to the user  */
+	private TextView tv11, tv21, tv22, tv23;
+	/** Navigaton buttons - navigate forward or backwards in the app */
+	private Button btnBack, btnCreatePlan;
+	/** Wheels for defining drink */
+	private AbstractWheel drinkTypeWheel, drinkVolumeWheel, alcByVolWheel, amountWheel, hourWheel, minuteWheel;
+	/** Variable for if wheels are scrolling */
+    private boolean drinkTypeWheelScrolling = false, hourWheelScrolling = false, minuteWheelScrolling = false;
+    
+	/**
+	 * Empty constructor required for fragment subclasses
+	 */
+	public PlanInputFragment() {
+		//Empty constructor
+    }
+
+    /* (non-Javadoc)
+     * @see android.app.Fragment#onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle)
+     */
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_plan_input, container, false);
+        
+        tv11 = (TextView) rootView.findViewById(R.id.tv11);
+        
+        amountWheel = (AbstractWheel) rootView.findViewById(R.id.amount);
+        amountWheel.setVisibleItems(3);
+        NumericWheelAdapter amountAdapter;
+        if (Global.isTypeNOD())
+        	amountAdapter = new NumericWheelAdapter(this.getActivity(), 0, 99, "%02d");
+        else
+        	amountAdapter = new NumericWheelAdapter(this.getActivity(), 1, 3, "%02d");
+        	
+        amountAdapter.setItemResource(R.layout.wheel_text_centered);
+        amountAdapter.setItemTextResource(R.id.text);
+        amountWheel.setViewAdapter(amountAdapter);
+		
+		tv21 = (TextView) rootView.findViewById(R.id.tv21);
+		tv22 = (TextView) rootView.findViewById(R.id.tv22);
+		tv23 = (TextView) rootView.findViewById(R.id.tv23);
+	
+		hourWheel = (AbstractWheel) rootView.findViewById(R.id.hours);
+		hourWheel.setVisibleItems(3);
+		NumericWheelAdapter hourAdapter = new NumericWheelAdapter(this.getActivity(), 0, 100);
+		hourAdapter.setTextSize(18);
+		hourWheel.setViewAdapter(hourAdapter);
+		hourWheel.setCyclic(true);
+		
+		hourWheel.addScrollingListener( new OnWheelScrollListener() {
+            @Override
+			public void onScrollingStarted(AbstractWheel wheel) { hourWheelScrolling = true; }
+            @Override
+			public void onScrollingFinished(AbstractWheel wheel) { 
+            	hourWheelScrolling = false;
+            	Global.setDuration((Global.getDuration() % 60) + hourWheel.getCurrentItem() * 60);
+            }
+        });
+        
+		hourWheel.addChangingListener(new OnWheelChangedListener() {
+            @Override
+			public void onChanged(AbstractWheel wheel, int oldValue, int newValue) {
+                if (!hourWheelScrolling) {
+                	Global.setDuration((Global.getDuration() % 60) + newValue * 60);
+                }
+            }
+        });
+		
+		minuteWheel = (AbstractWheel) rootView.findViewById(R.id.minutes);
+		minuteWheel.setVisibleItems(3);
+		NumericWheelAdapter minuteAdapter = new NumericWheelAdapter(this.getActivity(), 0, 59);
+		minuteAdapter.setTextSize(18);
+		minuteWheel.setViewAdapter(minuteAdapter);
+		minuteWheel.setCyclic(true);
+		
+		minuteWheel.addScrollingListener( new OnWheelScrollListener() {
+            @Override
+			public void onScrollingStarted(AbstractWheel wheel) { minuteWheelScrolling = true; }
+            @Override
+			public void onScrollingFinished(AbstractWheel wheel) { 
+            	minuteWheelScrolling = false;
+            	Global.setDuration((Global.getDuration() / 60) * 60 + minuteWheel.getCurrentItem());
+            }
+        });
+        
+		minuteWheel.addChangingListener(new OnWheelChangedListener() {
+            @Override
+			public void onChanged(AbstractWheel wheel, int oldValue, int newValue) {
+                if (!minuteWheelScrolling) {
+                	Global.setDuration((Global.getDuration() / 60) * 60 + newValue);
+                }
+            }
+        });
+		
+		btnBack = (Button) rootView.findViewById(R.id.btnBack);
+		btnCreatePlan = (Button) rootView.findViewById(R.id.btnCreatePlan);
+		
+		btnBack.setOnClickListener(backOnClickListener);
+		btnCreatePlan.setOnClickListener(createPlanOnClickListener);
+		
+        drinkTypeWheel = (AbstractWheel) rootView.findViewById(R.id.drinkType);
+        drinkTypeWheel.setVisibleItems(3);
+        ArrayWheelAdapter<String> drinkTypeAdapter = new ArrayWheelAdapter<String>(this.getActivity(), Global.drinkTypes);
+        drinkTypeAdapter.setTextSize(18);
+        drinkTypeWheel.setViewAdapter(drinkTypeAdapter);
+        
+        drinkVolumeWheel = (AbstractWheel) rootView.findViewById(R.id.drinkVolume);
+        drinkVolumeWheel.setVisibleItems(3);
+        
+        alcByVolWheel = (AbstractWheel) rootView.findViewById(R.id.alcByVolume);
+        alcByVolWheel.setVisibleItems(3);
+        ArrayWheelAdapter<String> alcByVolAdapter = new ArrayWheelAdapter<String>(this.getActivity(), Global.alcByVol);
+        alcByVolAdapter.setTextSize(18);
+        alcByVolWheel.setViewAdapter(alcByVolAdapter);
+        
+        drinkTypeWheel.addChangingListener(new OnWheelChangedListener() {
+            @Override
+			public void onChanged(AbstractWheel wheel, int oldValue, int newValue) {
+                if (!drinkTypeWheelScrolling) {
+                    updateVolumeWheel(drinkVolumeWheel, Global.volumes, newValue);
+                	updateAlcByVolWheel(alcByVolWheel, drinkTypeWheel.getCurrentItem());
+                }
+            }
+        });
+		
+        drinkTypeWheel.addScrollingListener( new OnWheelScrollListener() {
+            @Override
+			public void onScrollingStarted(AbstractWheel wheel) {
+            	drinkTypeWheelScrolling = true;
+            }
+            @Override
+			public void onScrollingFinished(AbstractWheel wheel) {
+            	drinkTypeWheelScrolling = false;
+            	updateVolumeWheel(drinkVolumeWheel, Global.volumes, drinkTypeWheel.getCurrentItem());
+            	updateAlcByVolWheel(alcByVolWheel, drinkTypeWheel.getCurrentItem());
+            }
+        });
+        
+        drinkVolumeWheel.addChangingListener(new OnWheelChangedListener() {
+            @Override
+			public void onChanged(AbstractWheel wheel, int oldValue, int newValue) {
+                if (!drinkTypeWheelScrolling) {
+                	Global.activeVolumes[Global.activeDrinkType] = newValue;
+                }
+            }
+        });
+        
+        alcByVolWheel.addChangingListener(new OnWheelChangedListener() {
+        	@Override
+			public void onChanged(AbstractWheel wheel, int oldValue, int newValue) {
+        		if (!drinkTypeWheelScrolling) {
+        			Global.activeAlcByVol[Global.activeDrinkType] = newValue;
+        		}
+        	}
+        });
+        
+        amountWheel.addChangingListener(new OnWheelChangedListener() {
+        	@Override
+			public void onChanged(AbstractWheel wheel, int oldValue, int newValue) {
+        		if (Global.isTypeBuzz())
+        			Global.setBuzz(newValue);
+        		else
+        			Global.setNod(newValue);
+        	}
+        });
+        
+        drinkTypeWheel.setCurrentItem(1);
+		
+		setup(Global.getType());
+        
+        return rootView;
+    }
+    
+	
+	/**
+	 * Initializes the screen setup of the text and input fields 
+	 * @param type The type of drinking plan proposed (controls which information is displayed)
+	 */
+	private void setup(int type) {
+		tv21.setText("Duration:");
+		tv22.setText("Hours");
+		tv23.setText("Minutes");
+		if (Global.isTypeNOD())
+			tv11.setText("Number of Drinks:");
+		else
+			tv11.setText("Buzz level:");
+	}
+	
+	/**
+	 * Listener for the Back-button - directs the user to the previous activity
+	 */
+	protected OnClickListener backOnClickListener = new OnClickListener()
+    {
+		@Override
+		public void onClick(View v) {
+			navigateFragments(new PickPlanFragment());
+		}
+    };
+    
+    /**
+     * Listener for the Create Plan-button
+     */
+    protected OnClickListener createPlanOnClickListener = new OnClickListener()
+    {
+		@Override
+		public void onClick(View v) {
+			Global.newPlan();
+			navigateFragments(new PlanFragment());
+		}
+    };
+	
+    /*
+     * (non-Javadoc)
+     * @see android.app.Activity#onResume()
+     */
+	@Override
+	public void onResume() {
+		super.onResume();
+		setup(Global.getType());
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see android.app.Activity#onRestart()
+	 */
+	protected void onRestart() {
+		onResume(); //Sm· skÌtamix, ˛a er Ì lagi stundum
+	}
+	
+    /**
+     * Updates the drinkVolumeWheel spinnerwheel
+     */
+    private void updateVolumeWheel(AbstractWheel drinkVolumeWheel, String volumes[][], int index) {
+    	boolean animated = true;
+    	Global.activeDrinkType = index;
+        ArrayWheelAdapter<String> adapter =
+            new ArrayWheelAdapter<String>(this.getActivity(), volumes[index]);
+        adapter.setTextSize(18);
+        drinkVolumeWheel.setViewAdapter(adapter);
+        drinkVolumeWheel.setCurrentItem(Global.activeVolumes[index], animated);
+    }
+    /**
+     * Updates the alcByVolWheel spinnerWheel
+     * @param alcByVolWheel
+     * @param drinkTypeWheelIndex
+     */
+    private void updateAlcByVolWheel(AbstractWheel alcByVolWheel, int drinkTypeWheelIndex) {
+    	boolean animated = true;
+    	alcByVolWheel.setCurrentItem(Global.activeAlcByVol[drinkTypeWheelIndex], animated);
+    }
+	
+    /**
+	 * Fragment navigator
+	 * @param fragment Replaces current fragment
+	 */
+    private void navigateFragments(Fragment fragment) {
+        FragmentManager fragmentManager = getFragmentManager();
+        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+    	
+    }
+}
